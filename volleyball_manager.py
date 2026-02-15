@@ -6,195 +6,207 @@ import time
 # --- KONFIGURACJA STRONY ---
 st.set_page_config(page_title="Volleyball Manager 2026", page_icon="🏐", layout="wide")
 
-# --- STYLE CSS (BOISKO I ANIMACJE) ---
+# --- STYLE CSS DLA BOISKA I UI ---
 st.markdown("""
     <style>
     .main { background-color: #0e1117; }
+    .stMetric { background-color: #1f2937; padding: 15px; border-radius: 10px; border: 1px solid #374151; }
     .court-container {
-        background: #2e7d32; padding: 20px; border-radius: 15px;
-        position: relative; min-height: 500px; border: 8px solid #f9a825; overflow: hidden;
+        background: #2e7d32; 
+        padding: 20px; 
+        border-radius: 15px; 
+        position: relative; 
+        min-height: 550px; 
+        border: 8px solid #f9a825;
+        overflow: hidden;
     }
-    .net { 
+    .net {
         position: absolute; left: 50%; top: 0; bottom: 0; 
-        width: 6px; background: rgba(255,255,255,0.8); z-index: 10; 
+        width: 6px; background: rgba(255,255,255,0.8); 
+        z-index: 10; border-left: 2px solid #333;
     }
-    .player-dot {
-        position: absolute; width: 42px; height: 42px; border-radius: 50%;
-        display: flex; justify-content: center; align-items: center;
-        color: white; font-weight: bold; font-size: 0.75em;
-        transition: all 0.5s ease-in-out; z-index: 20; border: 2px solid white;
-        text-align: center; line-height: 1;
+    .attack-line {
+        position: absolute; top: 0; bottom: 0; width: 2px; 
+        border-left: 3px dashed rgba(255,255,255,0.5);
     }
-    .ball-dot {
-        position: absolute; width: 22px; height: 22px; background: radial-gradient(circle, #fff, #ddd);
-        border-radius: 50%; z-index: 50; box-shadow: 0 0 15px #fff;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        border: 1px solid #ccc;
-    }
-    .stMetric { background-color: #1f2937; padding: 10px; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- INICJALIZACJA STANU GRY ---
+# --- INICJALIZACJA DANYCH ---
 if 'initialized' not in st.session_state:
-    st.session_state.update({
-        'initialized': True,
-        'budget': 500000,
-        'current_day': 1,
-        'morale': 80,
-        'league_table': {
-            "MKS Warszawa": {"M": 0, "W": 0, "P": 0, "PKT": 0},
-            "Jastrzębski Węgiel": {"M": 0, "W": 0, "P": 0, "PKT": 0},
-            "ZAKSA": {"M": 0, "W": 0, "P": 0, "PKT": 0},
-            "Projekt Warszawa": {"M": 0, "W": 0, "P": 0, "PKT": 0}
-        },
-        'players': [
-            {"id": 1, "n": "Kowalski", "p": "Rozgrywający", "at": 65, "bl": 70, "sr": 85},
-            {"id": 2, "n": "Nowak", "p": "Atakujący", "at": 92, "bl": 75, "sr": 88},
-            {"id": 3, "n": "Zieliński", "p": "Środkowy", "at": 80, "bl": 95, "sr": 70},
-            {"id": 4, "n": "Wiśniewski", "p": "Środkowy", "at": 78, "bl": 92, "sr": 65},
-            {"id": 5, "n": "Wójcik", "p": "Przyjmujący", "at": 84, "bl": 70, "sr": 80},
-            {"id": 6, "n": "Kamiński", "p": "Przyjmujący", "at": 82, "bl": 72, "sr": 78},
-            {"id": 7, "n": "Lewandowski", "p": "Libero", "at": 10, "bl": 5, "sr": 0},
-            {"id": 8, "n": "Bąk", "p": "Rezerwowy", "at": 70, "bl": 65, "sr": 60},
-            {"id": 9, "n": "Mazur", "p": "Rezerwowy", "at": 68, "bl": 60, "sr": 72}
-        ],
-        # Ustawienie "na skos": I-IV, II-V, III-VI
-        'lineup': { "I": 1, "II": 3, "III": 5, "IV": 2, "V": 4, "VI": 6 },
-        'match_in_progress': False,
-        'score_us': 0,
-        'score_opp': 0
-    })
+    st.session_state.initialized = True
+    st.session_state.budget = 500000
+    st.session_state.club_name = "MKS Warszawa"
+    st.session_state.current_day = 1
+    st.session_state.morale = 75
+    
+    st.session_state.league_teams = ["MKS Warszawa", "Jastrzębski Węgiel", "ZAKSA Kędzierzyn", "Projekt Warszawa", "Aluron Zawiercie", "Trefl Gdańsk"]
+    st.session_state.league_table = {team: {"M": 0, "W": 0, "P": 0, "PKT": 0} for team in st.session_state.league_teams}
+    
+    # Kadra (7 zawodników)
+    st.session_state.first_team = [
+        {"id": 1, "imie": "Jakub", "nazwisko": "Kowalski", "poz": "Przyjmujący", "nr": 10, "stats": {"atk": 85, "def": 80, "ser": 78, "blk": 70}, "forma": 90},
+        {"id": 2, "imie": "Piotr", "nazwisko": "Nowak", "poz": "Środkowy", "nr": 2, "stats": {"atk": 75, "def": 60, "ser": 65, "blk": 92}, "forma": 85},
+        {"id": 3, "imie": "Marcin", "nazwisko": "Wiśniewski", "poz": "Rozgrywający", "nr": 1, "stats": {"atk": 60, "def": 85, "ser": 82, "blk": 65}, "forma": 88},
+        {"id": 4, "imie": "Tomasz", "nazwisko": "Lewandowski", "poz": "Atakujący", "nr": 11, "stats": {"atk": 92, "def": 65, "ser": 85, "blk": 75}, "forma": 82},
+        {"id": 5, "imie": "Kamil", "nazwisko": "Wójcik", "poz": "Libero", "nr": 8, "stats": {"atk": 20, "def": 95, "ser": 0, "blk": 10}, "forma": 90},
+        {"id": 6, "imie": "Adam", "nazwisko": "Kamiński", "poz": "Przyjmujący", "nr": 12, "stats": {"atk": 82, "def": 82, "ser": 75, "blk": 74}, "forma": 85},
+        {"id": 7, "imie": "Michał", "nazwisko": "Zieliński", "poz": "Środkowy", "nr": 19, "stats": {"atk": 70, "def": 55, "ser": 60, "blk": 88}, "forma": 80},
+    ]
+    
+    st.session_state.starting_lineup = {"IV": 1, "III": 2, "II": 4, "V": 6, "VI": 5, "I": 3}
+    st.session_state.next_match = {"przeciwnik": "Jastrzębski Węgiel", "dzien": 2}
+    st.session_state.match_in_progress = False
 
-# --- MAPOWANIE POZYCJI NA BOISKU ---
-# Lewa strona (My)
-POS_US = {
-    "I":   {"l": "12%", "t": "72%"}, "VI":  {"l": "12%", "t": "48%"}, "V":   {"l": "12%", "t": "22%"},
-    "II":  {"l": "35%", "t": "72%"}, "III": {"l": "35%", "t": "48%"}, "IV":  {"l": "35%", "t": "22%"}
-}
-# Prawa strona (Przeciwnik)
-POS_OPP = {
-    "I":   {"l": "85%", "t": "25%"}, "VI":  {"l": "85%", "t": "50%"}, "V":   {"l": "85%", "t": "75%"},
-    "II":  {"l": "62%", "t": "25%"}, "III": {"l": "62%", "t": "50%"}, "IV":  {"l": "62%", "t": "75%"}
-}
+# --- POMOCNICZE ---
+def get_player(pid):
+    return next((p for p in st.session_state.first_team if p["id"] == pid), None)
 
-def draw_court(ball_pos, comment):
+# --- WIDOK BOISKA 2D ---
+def draw_court(score_us, score_opp, comment, ball=None):
+    st.markdown(f"<h1 style='text-align:center;'>🔵 {st.session_state.club_name} {score_us} : {score_opp} 🟡</h1>", unsafe_allow_html=True)
+    
+    # Mapa pozycji zawodników (nasza strona - lewa)
+    pos_coords = {
+        "IV": {"l": "40%", "t": "20%"}, "III": {"l": "40%", "t": "48%"}, "II": {"l": "40%", "t": "75%"},
+        "V": {"l": "15%", "t": "20%"}, "VI": {"l": "15%", "t": "48%"}, "I": {"l": "15%", "t": "75%"}
+    }
+    
     players_html = ""
-    # Rysuj naszą drużynę
-    for pos, pid in st.session_state.lineup.items():
-        p = next(x for x in st.session_state.players if x['id'] == pid)
-        
-        # Logika Libero: Jeśli Środkowy jest w 2. linii (I, VI, V), wchodzi Libero (id: 7)
-        display_name = p['n']
-        color = "#1565c0" # Niebieski
-        
-        if p['p'] == "Środkowy" and pos in ["I", "VI", "V"]:
-            libero = next(x for x in st.session_state.players if x['p'] == "Libero")
-            display_name = libero['n']
-            color = "#fbc02d" # Żółty dla Libero
-
+    for pos, c in pos_coords.items():
+        p = get_player(st.session_state.starting_lineup[pos])
         players_html += f"""
-        <div class='player-dot' style='left:{POS_US[pos]['l']}; top:{POS_US[pos]['t']}; background:{color};'>
-            {display_name[:3].upper()}<br><span style='font-size:8px'>{pos}</span>
-        </div>"""
-    
-    # Rysuj przeciwnika
-    for pos, coords in POS_OPP.items():
-        players_html += f"""
-        <div class='player-dot' style='left:{coords['l']}; top:{coords['t']}; background:#c62828;'>
-            CPU<br><span style='font-size:8px'>{pos}</span>
+        <div style='position: absolute; left: {c['l']}; top: {c['t']}; width: 45px; height: 45px; 
+             background: #1565c0; border: 3px solid white; border-radius: 50%; z-index: 20;
+             display: flex; justify-content: center; align-items: center; color: white; font-weight: bold;'>
+             {p['nr']}
         </div>"""
 
-    ball_html = f"<div class='ball-dot' style='left:{ball_pos[0]}; top:{ball_pos[1]};'></div>"
+    # Piłka
+    ball_html = ""
+    if ball:
+        ball_html = f"""<div style='position: absolute; left: {ball['l']}; top: {ball['t']}; 
+                        width: 25px; height: 25px; background: #fff; border-radius: 50%; 
+                        z-index: 50; box-shadow: 0 0 15px white; transition: all 0.4s ease;'></div>"""
+
+    st.markdown(f"""
+    <div class="court-container">
+        <div class="net"></div>
+        <div class="attack-line" style="left: 30%;"></div>
+        <div class="attack-line" style="left: 70%;"></div>
+        {players_html}
+        {ball_html}
+    </div>
+    """, unsafe_allow_html=True)
     
-    st.markdown(f"<div class='court-container'><div class='net'></div>{players_html}{ball_html}</div>", unsafe_allow_html=True)
-    st.info(f"🗨️ {comment}")
+    st.markdown(f"""<div style='background: #000; color: #0f0; padding: 15px; border-radius: 5px; 
+                 font-family: monospace; font-size: 1.2rem; margin-top: 10px; border-left: 5px solid #0f0;'>
+                 > {comment}</div>""", unsafe_allow_html=True)
 
-# --- TABS ---
-tab1, tab2, tab3 = st.tabs(["📊 BIURO", "📋 SKŁAD & TRANSFERY", "🎮 MECZ LIVE"])
+# --- SILNIK MECZOWY ---
+def play_rally(opp_level=80):
+    phases = []
+    
+    # 1. ZAGRYWKA
+    server = get_player(st.session_state.starting_lineup["I"])
+    skill = server["stats"]["ser"]
+    
+    if random.randint(1, 100) > skill + 10:
+        phases.append({"msg": f"Błąd serwisowy: {server['nazwisko']} w siatkę!", "ball": {"l": "50%", "t": "50%"}, "win": False})
+        return False, phases
+    
+    phases.append({"msg": f"Potężna zagrywka: {server['nazwisko']}", "ball": {"l": "85%", "t": "75%"}, "win": None})
+    
+    # 2. PRZYJĘCIE I WYSTAWA (Uproszczone)
+    phases.append({"msg": "Dobre przyjęcie, piłka do rozgrywającego...", "ball": {"l": "35%", "t": "48%"}, "win": None})
+    
+    # 3. ATAK (Szczegółowa logika: Mocny, Kiwka, Po Bloku)
+    attacker = get_player(random.choice([st.session_state.starting_lineup["IV"], st.session_state.starting_lineup["II"]]))
+    atk_type = random.choice(["POWER", "TIP", "BLOCK_OUT"])
+    
+    if atk_type == "TIP":
+        phases.append({"msg": f"Sprytna kiwka {attacker['nazwisko']}!", "ball": {"l": "55%", "t": "48%"}, "win": True})
+        return True, phases
+    
+    elif atk_type == "BLOCK_OUT":
+        phases.append({"msg": f"Atak {attacker['nazwisko']} po taśmie i bloku!", "ball": {"l": "50%", "t": "10%"}, "win": None})
+        phases.append({"msg": "Piłka ląduje na aucie! Punkt dla nas.", "ball": {"l": "95%", "t": "-5%"}, "win": True})
+        return True, phases
+    
+    else: # MOCNY ATAK
+        if attacker["stats"]["atk"] + random.randint(-10, 10) > opp_level:
+            phases.append({"msg": f"GWÓŹDŹ! {attacker['nazwisko']} wbija piłkę w parkiet!", "ball": {"l": "80%", "t": "30%"}, "win": True})
+            return True, phases
+        else:
+            phases.append({"msg": "ZATRZYMANY! Potrójny blok przeciwnika!", "ball": {"l": "48%", "t": "48%"}, "win": False})
+            return False, phases
 
-with tab1:
+# --- INTERFEJS GŁÓWNY ---
+st.title("🏐 Volleyball Manager 2026")
+
+t1, t2, t3 = st.tabs(["📊 BIURO", "📋 SKŁAD", "🎮 MECZ LIVE"])
+
+with t1:
     c1, c2, c3 = st.columns(3)
-    c1.metric("Budżet", f"{st.session_state.budget} PLN")
+    c1.metric("Budżet", f"{st.session_state.budget:,} PLN")
     c2.metric("Morale", f"{st.session_state.morale}%")
     c3.metric("Dzień", st.session_state.current_day)
     
-    st.subheader("Tabela Ekstraklasy 2026")
-    st.table(pd.DataFrame.from_dict(st.session_state.league_table, orient='index'))
+    st.subheader("Tabela Ligowa")
+    df = pd.DataFrame.from_dict(st.session_state.league_table, orient='index').sort_values("PKT", ascending=False)
+    st.table(df)
 
-with tab2:
-    st.subheader("Ustawienie wyjściowe (Rotacja)")
-    st.caption("Pamiętaj: Rozgrywający i Atakujący powinni być na skos (np. pozycje I i IV).")
+with t2:
+    st.subheader("Ustawienie na mecz (Rotacja początkowa)")
+    col_l, col_r = st.columns(2)
     
-    player_options = {f"{p['n']} ({p['p']})": p['id'] for p in st.session_state.players}
+    players_list = {f"{p['imie']} {p['nazwisko']} ({p['poz']})": p["id"] for p in st.session_state.first_team}
     
-    col_a, col_b = st.columns(2)
-    for i, pos in enumerate(["I", "II", "III", "IV", "V", "VI"]):
-        with col_a if i < 3 else col_b:
-            current_id = st.session_state.lineup[pos]
-            current_name = next(k for k, v in player_options.items() if v == current_id)
-            sel = st.selectbox(f"Pozycja {pos}", list(player_options.keys()), index=list(player_options.keys()).index(current_name), key=f"sel_{pos}")
-            st.session_state.lineup[pos] = player_options[sel]
+    for i, pos in enumerate(["IV", "III", "II", "V", "VI", "I"]):
+        with (col_l if i < 3 else col_r):
+            curr_val = next(k for k, v in players_list.items() if v == st.session_state.starting_lineup[pos])
+            sel = st.selectbox(f"Pozycja {pos}", list(players_list.keys()), index=list(players_list.keys()).index(curr_val))
+            st.session_state.starting_lineup[pos] = players_list[sel]
 
-    st.divider()
-    st.subheader("Rynek Transferowy")
-    if st.button("Szukaj talentów (Koszt: 10 000 PLN)"):
-        if st.session_state.budget >= 10000:
-            st.session_state.budget -= 10000
-            new_id = len(st.session_state.players) + 1
-            new_p = {"id": new_id, "n": "Młody", "p": "Perspektywiczny", "at": random.randint(60, 80), "bl": random.randint(60, 80), "sr": random.randint(60, 80)}
-            st.session_state.players.append(new_p)
-            st.success(f"Znaleziono nowego gracza: {new_p['n']}!")
-        else:
-            st.error("Brak funduszy!")
-
-with tab3:
-    if not st.session_state.match_in_progress:
-        if st.button("ROZPOCZNIJ TRANSMISJĘ MECZU", type="primary"):
-            st.session_state.match_in_progress = True
-            st.session_state.score_us = 0
-            st.session_state.score_opp = 0
+with t3:
+    if st.session_state.current_day < st.session_state.next_match["dzien"]:
+        st.info(f"Oczekiwanie na mecz z {st.session_state.next_match['przeciwnik']} (Dzień {st.session_state.next_match['dzien']})")
+        if st.button("Kontynuuj do dnia meczu"):
+            st.session_state.current_day = st.session_state.next_match["dzien"]
             st.rerun()
     else:
-        st.subheader(f"MECZ LIVE: {st.session_state.club_name} vs CPU")
-        match_placeholder = st.empty()
+        st.warning(f"DZISIAJ MECZ: {st.session_state.club_name} vs {st.session_state.next_match['przeciwnik']}")
         
-        # Prosta symulacja punkt po punkcie
-        while st.session_state.score_us < 25 and st.session_state.score_opp < 25:
-            # Faza 1: Serwis
-            with match_placeholder.container():
-                draw_court(["15%", "72%"], "Serwis Kowalskiego!")
-            time.sleep(0.6)
-            
-            # Faza 2: Piłka leci na stronę CPU
-            with match_placeholder.container():
-                draw_court(["75%", "50%"], "Przeciwnik przyjmuje...")
-            time.sleep(0.6)
-            
-            # Faza 3: Atak (losowanie wyniku)
-            if random.random() > 0.45:
-                st.session_state.score_us += 1
-                msg = "PUNKT! Potężny atak Nowaka po skosie!"
-                ball = ["90%", "30%"]
-            else:
-                st.session_state.score_opp += 1
-                msg = "BLOK! Zatrzymali nas na siatce..."
-                ball = ["10%", "50%"]
-            
-            with match_placeholder.container():
-                st.write(f"### WYNIK: {st.session_state.score_us} - {st.session_state.score_opp}")
-                draw_court(ball, msg)
-            time.sleep(1.0)
-
-        # Koniec meczu
-        st.session_state.match_in_progress = False
-        st.balloons()
-        if st.session_state.score_us > st.session_state.score_opp:
-            st.success("ZWYCIĘSTWO! +3 PKT do tabeli.")
-            st.session_state.league_table["MKS Warszawa"]["PKT"] += 3
-        else:
-            st.error("Porażka. Popracuj nad blokiem!")
+        if not st.session_state.match_in_progress:
+            if st.button("ROZPOCZNIJ TRANSMISJĘ", type="primary"):
+                st.session_state.match_in_progress = True
+                st.rerun()
         
-        if st.button("WRÓĆ DO BIURA"):
-            st.session_state.current_day += 1
-            st.rerun()
+        if st.session_state.match_in_progress:
+            board = st.empty()
+            s_us, s_opp = 0, 0
+            
+            # Symulacja punkt po punkcie
+            while s_us < 25 and s_opp < 25:
+                win, phases = play_rally()
+                for p in phases:
+                    with board.container():
+                        draw_court(s_us, s_opp, p["msg"], p["ball"])
+                    time.sleep(0.7)
+                
+                if win: s_us += 1
+                else: s_opp += 1
+                time.sleep(0.5)
+            
+            # Koniec seta
+            st.session_state.match_in_progress = False
+            st.session_state.league_table[st.session_state.club_name]["M"] += 1
+            st.session_state.league_table[st.session_state.club_name]["PKT"] += 3 if s_us > s_opp else 0
+            
+            st.balloons()
+            st.success(f"Koniec meczu! Wynik: {s_us}:{s_opp}")
+            
+            if st.button("Wróć do biura"):
+                st.session_state.current_day += 1
+                st.session_state.next_match["dzien"] += 7
+                st.rerun()
