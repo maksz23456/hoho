@@ -6,396 +6,195 @@ import time
 # --- KONFIGURACJA STRONY ---
 st.set_page_config(page_title="Volleyball Manager 2026", page_icon="🏐", layout="wide")
 
-# --- STYLE CSS DLA BOISKA I UI ---
+# --- STYLE CSS (BOISKO I ANIMACJE) ---
 st.markdown("""
     <style>
     .main { background-color: #0e1117; }
-    .stMetric { background-color: #1f2937; padding: 15px; border-radius: 10px; border: 1px solid #374151; }
     .court-container {
-        background: #2e7d32; /* Kolor boiska */
-        padding: 20px;
-        border-radius: 15px;
-        position: relative;
-        min-height: 550px;
-        border: 8px solid #f9a825; /* Linie autowe */
-        overflow: hidden;
-        margin-top: 15px;
+        background: #2e7d32; padding: 20px; border-radius: 15px;
+        position: relative; min-height: 500px; border: 8px solid #f9a825; overflow: hidden;
     }
-    .net {
-        position: absolute; left: 50%; top: 0; bottom: 0;
-        width: 6px; background: rgba(255,255,255,0.8);
-        z-index: 10; border-left: 2px solid #333;
-    }
-    .attack-line {
-        position: absolute; top: 0; bottom: 0; width: 2px;
-        border-left: 3px dashed rgba(255,255,255,0.5);
+    .net { 
+        position: absolute; left: 50%; top: 0; bottom: 0; 
+        width: 6px; background: rgba(255,255,255,0.8); z-index: 10; 
     }
     .player-dot {
-        position: absolute;
-        width: 45px; height: 45px;
-        border-radius: 50%;
+        position: absolute; width: 42px; height: 42px; border-radius: 50%;
         display: flex; justify-content: center; align-items: center;
-        color: white; font-weight: bold;
-        font-size: 0.9em;
-        transition: all 0.3s ease-out; /* Płynne przejścia */
-        box-shadow: 0 0 8px rgba(0,0,0,0.5);
-        z-index: 20;
+        color: white; font-weight: bold; font-size: 0.75em;
+        transition: all 0.5s ease-in-out; z-index: 20; border: 2px solid white;
+        text-align: center; line-height: 1;
     }
-    .player-us { background: #1565c0; border: 3px solid #add8e6; } /* Nasz zespół - niebieski */
-    .player-opp { background: #d32f2f; border: 3px solid #ffccbc; } /* Przeciwnik - czerwony */
     .ball-dot {
-        position: absolute;
-        width: 25px; height: 25px;
-        background: radial-gradient(circle at 30% 30%, #fff, #bbb);
-        border-radius: 50%;
-        z-index: 50;
-        box-shadow: 0 0 10px #ffe082, 0 0 5px #ffeb3b;
-        transition: all 0.4s ease-out; /* Płynne przejścia */
-        border: 2px solid #fbc02d;
+        position: absolute; width: 22px; height: 22px; background: radial-gradient(circle, #fff, #ddd);
+        border-radius: 50%; z-index: 50; box-shadow: 0 0 15px #fff;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid #ccc;
     }
+    .stMetric { background-color: #1f2937; padding: 10px; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- INICJALIZACJA DANYCH ---
+# --- INICJALIZACJA STANU GRY ---
 if 'initialized' not in st.session_state:
-    st.session_state.initialized = True
-    st.session_state.budget = 500000
-    st.session_state.club_name = "MKS Warszawa"
-    st.session_state.current_day = 1
-    st.session_state.morale = 75
-    
-    st.session_state.league_teams = ["MKS Warszawa", "Jastrzębski Węgiel", "ZAKSA Kędzierzyn", "Projekt Warszawa", "Aluron Zawiercie", "Trefl Gdańsk"]
-    st.session_state.league_table = {team: {"M": 0, "W": 0, "P": 0, "PKT": 0} for team in st.session_state.league_teams}
-    
-    # Kadra (7 zawodników)
-    st.session_state.first_team = [
-        {"id": 1, "imie": "Jakub", "nazwisko": "Kowalski", "poz": "Przyjmujący", "nr": 10, "stats": {"atk": 85, "def": 80, "ser": 78, "blk": 70, "set": 60}, "forma": 90, "fatigue": 0},
-        {"id": 2, "imie": "Piotr", "nazwisko": "Nowak", "poz": "Środkowy", "nr": 2, "stats": {"atk": 75, "def": 60, "ser": 65, "blk": 92, "set": 50}, "forma": 85, "fatigue": 0},
-        {"id": 3, "imie": "Marcin", "nazwisko": "Wiśniewski", "poz": "Rozgrywający", "nr": 1, "stats": {"atk": 60, "def": 85, "ser": 82, "blk": 65, "set": 90}, "forma": 88, "fatigue": 0},
-        {"id": 4, "imie": "Tomasz", "nazwisko": "Lewandowski", "poz": "Atakujący", "nr": 11, "stats": {"atk": 92, "def": 65, "ser": 85, "blk": 75, "set": 55}, "forma": 82, "fatigue": 0},
-        {"id": 5, "imie": "Kamil", "nazwisko": "Wójcik", "poz": "Libero", "nr": 8, "stats": {"atk": 20, "def": 95, "ser": 0, "blk": 10, "set": 80}, "forma": 90, "fatigue": 0},
-        {"id": 6, "imie": "Adam", "nazwisko": "Kamiński", "poz": "Przyjmujący", "nr": 12, "stats": {"atk": 82, "def": 82, "ser": 75, "blk": 74, "set": 65}, "forma": 85, "fatigue": 0},
-        {"id": 7, "imie": "Michał", "nazwisko": "Zieliński", "poz": "Środkowy", "nr": 19, "stats": {"atk": 70, "def": 55, "ser": 60, "blk": 88, "set": 50}, "forma": 80, "fatigue": 0},
-    ]
-    
-    # Przykładowi zawodnicy przeciwnika (uproszczone)
-    st.session_state.opp_team = [
-        {"id": 101, "imie": "Opp", "nazwisko": "Player1", "nr": 1, "poz": "OH", "stats": {"atk": 80, "def": 75, "ser": 70, "blk": 70, "set": 60}},
-        {"id": 102, "imie": "Opp", "nazwisko": "Player2", "nr": 2, "poz": "MB", "stats": {"atk": 70, "def": 60, "ser": 60, "blk": 85, "set": 50}},
-        {"id": 103, "imie": "Opp", "nazwisko": "Player3", "nr": 3, "poz": "SET", "stats": {"atk": 55, "def": 80, "ser": 75, "blk": 60, "set": 85}},
-        {"id": 104, "imie": "Opp", "nazwisko": "Player4", "nr": 4, "poz": "OPP", "stats": {"atk": 88, "def": 60, "ser": 80, "blk": 70, "set": 55}},
-        {"id": 105, "imie": "Opp", "nazwisko": "Player5", "nr": 5, "poz": "LIB", "stats": {"atk": 20, "def": 90, "ser": 0, "blk": 10, "set": 75}},
-        {"id": 106, "imie": "Opp", "nazwisko": "Player6", "nr": 6, "poz": "OH", "stats": {"atk": 78, "def": 78, "ser": 70, "blk": 70, "set": 60}},
-    ]
+    st.session_state.update({
+        'initialized': True,
+        'budget': 500000,
+        'current_day': 1,
+        'morale': 80,
+        'league_table': {
+            "MKS Warszawa": {"M": 0, "W": 0, "P": 0, "PKT": 0},
+            "Jastrzębski Węgiel": {"M": 0, "W": 0, "P": 0, "PKT": 0},
+            "ZAKSA": {"M": 0, "W": 0, "P": 0, "PKT": 0},
+            "Projekt Warszawa": {"M": 0, "W": 0, "P": 0, "PKT": 0}
+        },
+        'players': [
+            {"id": 1, "n": "Kowalski", "p": "Rozgrywający", "at": 65, "bl": 70, "sr": 85},
+            {"id": 2, "n": "Nowak", "p": "Atakujący", "at": 92, "bl": 75, "sr": 88},
+            {"id": 3, "n": "Zieliński", "p": "Środkowy", "at": 80, "bl": 95, "sr": 70},
+            {"id": 4, "n": "Wiśniewski", "p": "Środkowy", "at": 78, "bl": 92, "sr": 65},
+            {"id": 5, "n": "Wójcik", "p": "Przyjmujący", "at": 84, "bl": 70, "sr": 80},
+            {"id": 6, "n": "Kamiński", "p": "Przyjmujący", "at": 82, "bl": 72, "sr": 78},
+            {"id": 7, "n": "Lewandowski", "p": "Libero", "at": 10, "bl": 5, "sr": 0},
+            {"id": 8, "n": "Bąk", "p": "Rezerwowy", "at": 70, "bl": 65, "sr": 60},
+            {"id": 9, "n": "Mazur", "p": "Rezerwowy", "at": 68, "bl": 60, "sr": 72}
+        ],
+        # Ustawienie "na skos": I-IV, II-V, III-VI
+        'lineup': { "I": 1, "II": 3, "III": 5, "IV": 2, "V": 4, "VI": 6 },
+        'match_in_progress': False,
+        'score_us': 0,
+        'score_opp': 0
+    })
 
-    # Początkowe ustawienie na boisku (ID graczy z first_team)
-    # Pozycje: I, II, III, IV, V, VI (Zgodnie z rotacją)
-    st.session_state.starting_lineup = {
-        "I": 3,  # Rozgrywający
-        "II": 4, # Atakujący
-        "III": 2, # Środkowy
-        "IV": 1,  # Przyjmujący
-        "V": 6,  # Przyjmujący
-        "VI": 5  # Libero (na przyjęciu)
-    }
+# --- MAPOWANIE POZYCJI NA BOISKU ---
+# Lewa strona (My)
+POS_US = {
+    "I":   {"l": "12%", "t": "72%"}, "VI":  {"l": "12%", "t": "48%"}, "V":   {"l": "12%", "t": "22%"},
+    "II":  {"l": "35%", "t": "72%"}, "III": {"l": "35%", "t": "48%"}, "IV":  {"l": "35%", "t": "22%"}
+}
+# Prawa strona (Przeciwnik)
+POS_OPP = {
+    "I":   {"l": "85%", "t": "25%"}, "VI":  {"l": "85%", "t": "50%"}, "V":   {"l": "85%", "t": "75%"},
+    "II":  {"l": "62%", "t": "25%"}, "III": {"l": "62%", "t": "50%"}, "IV":  {"l": "62%", "t": "75%"}
+}
 
-    st.session_state.next_match = {"przeciwnik": "Jastrzębski Węgiel", "dzien": 2}
-    st.session_state.match_in_progress = False
-    st.session_state.current_set = 1
-    st.session_state.sets_won = 0
-    st.session_state.sets_lost = 0
-
-# --- POMOCNICZE FUNKCJE ---
-def get_player(pid, team="us"):
-    if team == "us":
-        return next((p for p in st.session_state.first_team if p["id"] == pid), None)
-    else:
-        return next((p for p in st.session_state.opp_team if p["id"] == pid), None)
-
-def get_player_by_position(pos_key, team="us"):
-    if team == "us":
-        player_id = st.session_state.starting_lineup[pos_key]
-        return get_player(player_id, team="us")
-    else:
-        # Dla przeciwnika upraszczamy: stałe przypisanie ID do pozycji
-        opp_lineup = {
-            "I": 103, "II": 104, "III": 102,
-            "IV": 101, "V": 106, "VI": 105
-        }
-        player_id = opp_lineup[pos_key]
-        return get_player(player_id, team="opp")
-
-def get_effective_stat(player, stat_name):
-    # Oblicz efektywną statystykę uwzględniającą formę i zmęczenie
-    base_stat = player["stats"].get(stat_name, 0)
-    form_factor = player.get("forma", 100) / 100
-    fatigue_penalty = player.get("fatigue", 0) / 2 # Każde 2 punkty zmęczenia to 1% mniej skilla
-    
-    effective_value = base_stat * form_factor - fatigue_penalty
-    return max(10, min(100, int(effective_value))) # Statystyki między 10 a 100
-
-def apply_fatigue(player_id, team="us", amount=1):
-    if team == "us":
-        for p in st.session_state.first_team:
-            if p["id"] == player_id:
-                p["fatigue"] = min(p["fatigue"] + amount, 100) # Max 100 zmęczenia
-                break
-    else:
-        # Przeciwnik nie śledzi zmęczenia w tej wersji, ale można by to dodać
-        pass
-
-def rotate_team(team_side):
-    # Rotacja dla naszej drużyny
-    if team_side == "us":
-        current_lineup = st.session_state.starting_lineup
-        new_lineup = {}
-        # Przesuwanie pozycji zgodnie z ruchem wskazówek zegara
-        new_lineup["I"] = current_lineup["VI"]
-        new_lineup["II"] = current_lineup["I"]
-        new_lineup["III"] = current_lineup["II"]
-        new_lineup["IV"] = current_lineup["III"]
-        new_lineup["V"] = current_lineup["IV"]
-        new_lineup["VI"] = current_lineup["V"]
-        st.session_state.starting_lineup = new_lineup
-    else:
-        # Możesz zaimplementować rotację dla przeciwnika w podobny sposób
-        pass
-
-# --- WIDOK BOISKA 2D Z ANIMACJĄ ---
-def draw_court_live(score_us, score_opp, comment, player_positions, ball_pos=None):
-    st.markdown(f"<h1 style='text-align:center;'>🔵 {st.session_state.club_name} {score_us} : {score_opp} 🔴 {st.session_state.next_match['przeciwnik']}</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h2 style='text-align:center;'>SET {st.session_state.current_set} ({st.session_state.sets_won}:{st.session_state.sets_lost})</h2>", unsafe_allow_html=True)
-
+def draw_court(ball_pos, comment):
     players_html = ""
-    for team, players_data in player_positions.items():
-        for pos_key, player_info in players_data.items():
-            player_class = "player-us" if team == "us" else "player-opp"
-            players_html += f"""
-            <div class='player-dot {player_class}' style='left: {player_info['l']}; top: {player_info['t']};'>
-                {player_info['nr']}<br>
-                <span style='font-size:0.6em;'>{player_info['nazwisko']}</span>
-            </div>"""
-
-    ball_html = ""
-    if ball_pos:
-        ball_html = f"""<div class='ball-dot' style='left: {ball_pos['l']}; top: {ball_pos['t']};'></div>"""
-
-    st.markdown(f"""
-    <div class="court-container">
-        <div class="net"></div>
-        <div class="attack-line" style="left: 30%;"></div>
-        <div class="attack-line" style="left: 70%;"></div>
-        {players_html}
-        {ball_html}
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown(f"""<div style='background: #000; color: #0f0; padding: 15px; border-radius: 5px;
-                    font-family: monospace; font-size: 1.2rem; margin-top: 10px; border-left: 5px solid #0f0;'>
-                    > {comment}</div>""", unsafe_allow_html=True)
-
-# --- SILNIK MECZOWY ---
-def play_rally(server_team="us"):
-    phases = []
-    win_point_us = None # True: my punkt, False: przeciwnik punkt
-
-    # Początkowe pozycje na boisku dla 6 na 6 graczy
-    # % lewo, % góra
-    # Pozycje naszego zespołu (lewa strona boiska)
-    us_coords = {
-        "I": {"l": "15%", "t": "75%"},    # Rozgrywający
-        "II": {"l": "40%", "t": "75%"},   # Atakujący
-        "III": {"l": "40%", "t": "48%"},  # Środkowy
-        "IV": {"l": "40%", "t": "20%"},   # Przyjmujący
-        "V": {"l": "15%", "t": "20%"},    # Przyjmujący
-        "VI": {"l": "15%", "t": "48%"}    # Libero
-    }
-    
-    # Pozycje przeciwnika (prawa strona boiska)
-    opp_coords = {
-        "I": {"l": "85%", "t": "75%"},
-        "II": {"l": "60%", "t": "75%"},
-        "III": {"l": "60%", "t": "48%"},
-        "IV": {"l": "60%", "t": "20%"},
-        "V": {"l": "85%", "t": "20%"},
-        "VI": {"l": "85%", "t": "48%"}
-    }
-
-    # Przygotowanie pełnej struktury pozycji dla draw_court_live
-    current_player_positions = {"us": {}, "opp": {}}
-    for pos_key, coords in us_coords.items():
-        p = get_player_by_position(pos_key, "us")
-        current_player_positions["us"][pos_key] = {**coords, "nr": p["nr"], "nazwisko": p["nazwisko"]}
-    for pos_key, coords in opp_coords.items():
-        p = get_player_by_position(pos_key, "opp")
-        current_player_positions["opp"][pos_key] = {**coords, "nr": p["nr"], "nazwisko": p["nazwisko"]}
-
-    # --- 1. ZAGRYWKA ---
-    if server_team == "us":
-        server = get_player_by_position("I", team="us") # Zawsze I pozycja serwuje
-        skill = get_effective_stat(server, "ser")
-        apply_fatigue(server["id"], amount=2)
+    # Rysuj naszą drużynę
+    for pos, pid in st.session_state.lineup.items():
+        p = next(x for x in st.session_state.players if x['id'] == pid)
         
-        phases.append({"comment": f"Sędzia gwizd! Zagrywka: {server['nazwisko']}.", "players": current_player_positions, "ball": us_coords["I"]})
-        time.sleep(0.5)
+        # Logika Libero: Jeśli Środkowy jest w 2. linii (I, VI, V), wchodzi Libero (id: 7)
+        display_name = p['n']
+        color = "#1565c0" # Niebieski
+        
+        if p['p'] == "Środkowy" and pos in ["I", "VI", "V"]:
+            libero = next(x for x in st.session_state.players if x['p'] == "Libero")
+            display_name = libero['n']
+            color = "#fbc02d" # Żółty dla Libero
 
-        if random.randint(1, 100) > skill + 15: # Błąd serwisowy
-            phases.append({"comment": f"Błąd serwisowy! {server['nazwisko']} w siatkę/aut.", "players": current_player_positions, "ball": {"l": "50%", "t": "50%"}})
-            win_point_us = False
-        else:
-            phases.append({"comment": f"Potężna zagrywka {server['nazwisko']}!", "players": current_player_positions, "ball": {"l": "85%", "t": "75%"}})
-            # Przyjęcie przez przeciwnika
-            receiver_skill_opp = get_effective_stat(get_player_by_position("I", "opp"), "def") # Przykładowy receiver
-            if random.randint(1, 100) > receiver_skill_opp + 10: # Błąd przyjęcia
-                phases.append({"comment": "As serwisowy! Błąd przyjęcia przeciwnika.", "players": current_player_positions, "ball": {"l": "95%", "t": "5%"}})
-                win_point_us = True
-            else:
-                phases.append({"comment": "Dobre przyjęcie przeciwnika, piłka w górze.", "players": current_player_positions, "ball": opp_coords["VI"]})
-                phases.append({"comment": "Rozegranie do atakującego przeciwnika.", "players": current_player_positions, "ball": opp_coords["III"]})
-                
-                # --- Kontratak przeciwnika ---
-                attacker_opp = get_player_by_position("II", team="opp") # Przykładowy atakujący przeciwnika
-                atk_skill_opp = get_effective_stat(attacker_opp, "atk")
-                
-                blocker_us = get_player_by_position("III", team="us") # Nasz środkowy
-                block_skill_us = get_effective_stat(blocker_us, "blk")
-                apply_fatigue(blocker_us["id"], amount=3)
+        players_html += f"""
+        <div class='player-dot' style='left:{POS_US[pos]['l']}; top:{POS_US[pos]['t']}; background:{color};'>
+            {display_name[:3].upper()}<br><span style='font-size:8px'>{pos}</span>
+        </div>"""
+    
+    # Rysuj przeciwnika
+    for pos, coords in POS_OPP.items():
+        players_html += f"""
+        <div class='player-dot' style='left:{coords['l']}; top:{coords['t']}; background:#c62828;'>
+            CPU<br><span style='font-size:8px'>{pos}</span>
+        </div>"""
 
-                phases.append({"comment": f"Atak przeciwnika! {attacker_opp['nazwisko']} uderza!", "players": current_player_positions, "ball": {"l": "60%", "t": "48%"}})
-                
-                if random.randint(1, 100) < block_skill_us - 10: # Udany blok
-                    phases.append({"comment": f"BLOK! {blocker_us['nazwisko']} zatrzymuje atak!", "players": current_player_positions, "ball": us_coords["III"]})
-                    win_point_us = True
-                elif random.randint(1, 100) < atk_skill_opp: # Atak skuteczny
-                    phases.append({"comment": "Skuteczny atak przeciwnika! Punkt dla nich.", "players": current_player_positions, "ball": {"l": "10%", "t": "30%"}})
-                    win_point_us = False
-                else: # Obrona
-                    phases.append({"comment": "Piłka w boisku, obrona po naszej stronie!", "players": current_player_positions, "ball": us_coords["VI"]})
-                    
-                    # --- Nasz kontratak po obronie ---
-                    setter_us = get_player_by_position("I", team="us")
-                    set_skill_us = get_effective_stat(setter_us, "set")
-                    apply_fatigue(setter_us["id"], amount=2)
+    ball_html = f"<div class='ball-dot' style='left:{ball_pos[0]}; top:{ball_pos[1]};'></div>"
+    
+    st.markdown(f"<div class='court-container'><div class='net'></div>{players_html}{ball_html}</div>", unsafe_allow_html=True)
+    st.info(f"🗨️ {comment}")
 
-                    phases.append({"comment": "Rozgrywający ustawia piłkę do ataku.", "players": current_player_positions, "ball": us_coords["I"]})
-                    
-                    attacker_us = get_player_by_position(random.choice(["II", "IV"]), team="us")
-                    atk_skill_us = get_effective_stat(attacker_us, "atk")
-                    apply_fatigue(attacker_us["id"], amount=4)
-                    
-                    blocker_opp = get_player_by_position("III", team="opp")
-                    block_skill_opp = get_effective_stat(blocker_opp, "blk")
+# --- TABS ---
+tab1, tab2, tab3 = st.tabs(["📊 BIURO", "📋 SKŁAD & TRANSFERY", "🎮 MECZ LIVE"])
 
-                    phases.append({"comment": f"GWÓŹDŹ! {attacker_us['nazwisko']} atakuje!", "players": current_player_positions, "ball": {"l": "40%", "t": "48%"}})
-
-                    if random.randint(1, 100) < atk_skill_us + 10:
-                        phases.append({"comment": "Piłka wbita w parkiet! Punkt dla nas!", "players": current_player_positions, "ball": {"l": "80%", "t": "30%"}})
-                        win_point_us = True
-                    elif random.randint(1, 100) < block_skill_opp - 15:
-                        phases.append({"comment": "BLOK! Przeciwnik zatrzymuje atak!", "players": current_player_positions, "ball": opp_coords["III"]})
-                        win_point_us = False
-                    else:
-                        phases.append({"comment": "Obrona przeciwnika. Długa wymiana!", "players": current_player_positions, "ball": {"l": "70%", "t": "30%"}})
-                        win_point_us = False # Na razie upraszczamy, że długa wymiana kończy się dla przeciwnika
-    else: # Serwis przeciwnika
-        server_opp = get_player_by_position("I", team="opp")
-        skill_opp = get_effective_stat(server_opp, "ser")
-
-        phases.append({"comment": f"Zagrywka przeciwnika: {server_opp['nazwisko']}.", "players": current_player_positions, "ball": opp_coords["I"]})
-        time.sleep(0.5)
-
-        if random.randint(1, 100) > skill_opp + 15:
-            phases.append({"comment": f"Błąd serwisowy przeciwnika! Piłka w aut.", "players": current_player_positions, "ball": {"l": "50%", "t": "50%"}})
-            win_point_us = True
-        else:
-            phases.append({"comment": f"Mocna zagrywka {server_opp['nazwisko']}!", "players": current_player_positions, "ball": {"l": "15%", "t": "75%"}})
-            
-            receiver_us = get_player_by_position("I", team="us") # Rozgrywający na przyjęciu
-            def_skill_us = get_effective_stat(receiver_us, "def")
-            apply_fatigue(receiver_us["id"], amount=2)
-
-            if random.randint(1, 100) > def_skill_us + 10:
-                phases.append({"comment": "As serwisowy przeciwnika! Błąd przyjęcia.", "players": current_player_positions, "ball": {"l": "5%", "t": "95%"}})
-                win_point_us = False
-            else:
-                phases.append({"comment": "Perfekcyjne przyjęcie! Piłka do rozgrywającego.", "players": current_player_positions, "ball": us_coords["VI"]})
-                
-                # --- Nasz atak po przyjęciu ---
-                setter_us = get_player_by_position("I", team="us")
-                set_skill_us = get_effective_stat(setter_us, "set")
-                apply_fatigue(setter_us["id"], amount=2)
-
-                phases.append({"comment": "Rozgrywający: Wiśniewski wystawia piłkę!", "players": current_player_positions, "ball": us_coords["I"]})
-                
-                attacker_us = get_player_by_position(random.choice(["II", "IV"]), team="us")
-                atk_skill_us = get_effective_stat(attacker_us, "atk")
-                apply_fatigue(attacker_us["id"], amount=4)
-
-                blocker_opp = get_player_by_position("III", team="opp")
-                block_skill_opp = get_effective_stat(blocker_opp, "blk")
-
-                phases.append({"comment": f"Atak: {attacker_us['nazwisko']} uderza z całej siły!", "players": current_player_positions, "ball": {"l": "40%", "t": "48%"}})
-
-                if random.randint(1, 100) < atk_skill_us:
-                    phases.append({"comment": "Mocny atak przełamuje blok! Punkt dla nas!", "players": current_player_positions, "ball": {"l": "80%", "t": "30%"}})
-                    win_point_us = True
-                elif random.randint(1, 100) < block_skill_opp - 10:
-                    phases.append({"comment": "Zablokowany! Przeciwnik stawia ścianę!", "players": current_player_positions, "ball": opp_coords["III"]})
-                    win_point_us = False
-                else:
-                    phases.append({"comment": "Obrona przeciwnika, kontratak!", "players": current_player_positions, "ball": {"l": "70%", "t": "30%"}})
-                    # Kontynuacja wymiany (upraszczamy na razie do punktu dla przeciwnika)
-                    win_point_us = False
-
-
-    return win_point_us, phases
-
-# --- INTERFEJS GŁÓWNY ---
-st.title("🏐 Volleyball Manager 2026")
-
-t1, t2, t3 = st.tabs(["📊 BIURO", "📋 SKŁAD", "🎮 MECZ LIVE"])
-
-with t1:
+with tab1:
     c1, c2, c3 = st.columns(3)
-    c1.metric("Budżet", f"{st.session_state.budget:,} PLN")
+    c1.metric("Budżet", f"{st.session_state.budget} PLN")
     c2.metric("Morale", f"{st.session_state.morale}%")
     c3.metric("Dzień", st.session_state.current_day)
     
-    st.subheader("Tabela Ligowa")
-    df = pd.DataFrame.from_dict(st.session_state.league_table, orient='index').sort_values("PKT", ascending=False)
-    st.table(df)
+    st.subheader("Tabela Ekstraklasy 2026")
+    st.table(pd.DataFrame.from_dict(st.session_state.league_table, orient='index'))
 
-with t2:
-    st.subheader("Ustawienie na mecz (Rotacja początkowa)")
-    st.write("Wybierz zawodników na początkowe pozycje rotacji.")
-    st.markdown("""
-    **I (Rozgrywający/Libero tył)**<br>
-    **II (Atakujący/Środkowy przód)**<br>
-    **III (Środkowy/Rozgrywający przód)**<br>
-    **IV (Przyjmujący/Atakujący przód)**<br>
-    **V (Przyjmujący/Środkowy tył)**<br>
-    **VI (Libero/Przyjmujący tył)**
-    """)
-    col_l, col_r = st.columns(2)
+with tab2:
+    st.subheader("Ustawienie wyjściowe (Rotacja)")
+    st.caption("Pamiętaj: Rozgrywający i Atakujący powinni być na skos (np. pozycje I i IV).")
     
-    players_list_options = {f"{p['imie']} {p['nazwisko']} ({p['poz']})": p["id"] for p in st.session_state.first_team}
+    player_options = {f"{p['n']} ({p['p']})": p['id'] for p in st.session_state.players}
     
-    # Lista kluczy pozycji w ustalonej kolejności do wyświetlania
-    ordered_positions = ["I", "II", "III", "IV", "V", "VI"]
+    col_a, col_b = st.columns(2)
+    for i, pos in enumerate(["I", "II", "III", "IV", "V", "VI"]):
+        with col_a if i < 3 else col_b:
+            current_id = st.session_state.lineup[pos]
+            current_name = next(k for k, v in player_options.items() if v == current_id)
+            sel = st.selectbox(f"Pozycja {pos}", list(player_options.keys()), index=list(player_options.keys()).index(current_name), key=f"sel_{pos}")
+            st.session_state.lineup[pos] = player_options[sel]
 
-    for i, pos in enumerate(ordered_positions):
-        with (col_l if i < 3 else col_r):
-            curr_val_id = st.session_state.starting_lineup[pos]
-            curr_val_name = next(k for k, v in players_list_options.items() if v == curr_val_id)
+    st.divider()
+    st.subheader("Rynek Transferowy")
+    if st.button("Szukaj talentów (Koszt: 10 000 PLN)"):
+        if st.session_state.budget >= 10000:
+            st.session_state.budget -= 10000
+            new_id = len(st.session_state.players) + 1
+            new_p = {"id": new_id, "n": "Młody", "p": "Perspektywiczny", "at": random.randint(60, 80), "bl": random.randint(60, 80), "sr": random.randint(60, 80)}
+            st.session_state.players.append(new_p)
+            st.success(f"Znaleziono nowego gracza: {new_p['n']}!")
+        else:
+            st.error("Brak funduszy!")
+
+with tab3:
+    if not st.session_state.match_in_progress:
+        if st.button("ROZPOCZNIJ TRANSMISJĘ MECZU", type="primary"):
+            st.session_state.match_in_progress = True
+            st.session_state.score_us = 0
+            st.session_state.score_opp = 0
+            st.rerun()
+    else:
+        st.subheader(f"MECZ LIVE: {st.session_state.club_name} vs CPU")
+        match_placeholder = st.empty()
+        
+        # Prosta symulacja punkt po punkcie
+        while st.session_state.score_us < 25 and st.session_state.score_opp < 25:
+            # Faza 1: Serwis
+            with match_placeholder.container():
+                draw_court(["15%", "72%"], "Serwis Kowalskiego!")
+            time.sleep(0.6)
             
-            sel = st.selectbox(f"Pozycja {pos}", list(players_list_options.keys()), 
-                               index=list(players_list_options.keys()).index(curr_val_name), key=f"pos_sel_{pos}")
-            st.session_state.starting_lineup[pos] = players_list_options[sel]
-    
-    st.subheader("Kadra zawodników")
-    df_players = pd.DataFrame(st.session_state.first_team)
-    df_players_display = df_players[['nr', 'imie', 'nazwisko', 'poz', 'forma', 'fatigue']]
-    df_players_display['atk'] = df_players['stats'].apply(lambda x: x['atk'])
-    df_players_display['def'] = df_players['stats'].apply(lambda x: x['def'])
-    df_players_display['ser'] = df_players['stats'].apply(lambda x: x['ser'])
-    df
+            # Faza 2: Piłka leci na stronę CPU
+            with match_placeholder.container():
+                draw_court(["75%", "50%"], "Przeciwnik przyjmuje...")
+            time.sleep(0.6)
+            
+            # Faza 3: Atak (losowanie wyniku)
+            if random.random() > 0.45:
+                st.session_state.score_us += 1
+                msg = "PUNKT! Potężny atak Nowaka po skosie!"
+                ball = ["90%", "30%"]
+            else:
+                st.session_state.score_opp += 1
+                msg = "BLOK! Zatrzymali nas na siatce..."
+                ball = ["10%", "50%"]
+            
+            with match_placeholder.container():
+                st.write(f"### WYNIK: {st.session_state.score_us} - {st.session_state.score_opp}")
+                draw_court(ball, msg)
+            time.sleep(1.0)
+
+        # Koniec meczu
+        st.session_state.match_in_progress = False
+        st.balloons()
+        if st.session_state.score_us > st.session_state.score_opp:
+            st.success("ZWYCIĘSTWO! +3 PKT do tabeli.")
+            st.session_state.league_table["MKS Warszawa"]["PKT"] += 3
+        else:
+            st.error("Porażka. Popracuj nad blokiem!")
+        
+        if st.button("WRÓĆ DO BIURA"):
+            st.session_state.current_day += 1
+            st.rerun()
