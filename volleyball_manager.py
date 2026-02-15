@@ -3,7 +3,6 @@ import pandas as pd
 import random
 import time
 
-# Konfiguracja
 st.set_page_config(page_title="Volleyball Manager 2024", page_icon="🏐", layout="wide")
 
 # Inicjalizacja
@@ -15,33 +14,19 @@ if 'initialized' not in st.session_state:
     st.session_state.current_day = 1
     st.session_state.morale = 75
     
-    # Drużyny ligowe
     st.session_state.league_teams = [
-        "MKS Warszawa",  # My
-        "Jastrzębski Węgiel",
-        "ZAKSA Kędzierzyn-Koźle",
-        "Projekt Warszawa",
-        "Aluron Zawiercie",
-        "Trefl Gdańsk",
-        "PGE Skra Bełchatów",
-        "AZS Kraków",
-        "Indykpol AZS Olsztyn",
-        "Bogdanka LUK Lublin"
+        "MKS Warszawa", "Jastrzębski Węgiel", "ZAKSA Kędzierzyn-Koźle",
+        "Projekt Warszawa", "Aluron Zawiercie", "Trefl Gdańsk",
+        "PGE Skra Bełchatów", "AZS Kraków", "Indykpol AZS Olsztyn", "Bogdanka LUK Lublin"
     ]
     
-    # Tabela ligowa
     st.session_state.league_table = {}
     for team in st.session_state.league_teams:
         st.session_state.league_table[team] = {
-            "mecze": 0,
-            "wygrane": 0,
-            "przegrane": 0,
-            "sety_plus": 0,
-            "sety_minus": 0,
-            "punkty": 0
+            "mecze": 0, "wygrane": 0, "przegrane": 0,
+            "sety_plus": 0, "sety_minus": 0, "punkty": 0
         }
     
-    # Pierwsza drużyna
     st.session_state.first_team = [
         {"id": 1, "imie": "Jakub", "nazwisko": "Kowalski", "pozycja": "Przyjmujący", "numer": 10, "wiek": 24, "umiejetnosci": {"atak": 85, "obrona": 82, "zagrywka": 75, "blok": 72}, "forma": 80, "kontuzja": 0, "pensja": 15000},
         {"id": 2, "imie": "Piotr", "nazwisko": "Nowak", "pozycja": "Środkowy", "numer": 2, "wiek": 27, "umiejetnosci": {"atak": 78, "obrona": 65, "zagrywka": 68, "blok": 88}, "forma": 75, "kontuzja": 0, "pensja": 12000},
@@ -52,32 +37,27 @@ if 'initialized' not in st.session_state:
         {"id": 7, "imie": "Michał", "nazwisko": "Zieliński", "pozycja": "Środkowy", "numer": 19, "wiek": 23, "umiejetnosci": {"atak": 75, "obrona": 62, "zagrywka": 65, "blok": 85}, "forma": 77, "kontuzja": 0, "pensja": 10000},
     ]
     
-    # Cała reszta zawodników (ławka + akademia = poza składem)
     st.session_state.reserve_players = [
         {"id": 8, "imie": "Paweł", "nazwisko": "Szymański", "pozycja": "Przyjmujący", "numer": 13, "wiek": 28, "umiejetnosci": {"atak": 76, "obrona": 78, "zagrywka": 72, "blok": 70}, "forma": 80, "kontuzja": 0, "pensja": 13000},
         {"id": 9, "imie": "Krzysztof", "nazwisko": "Dąbrowski", "pozycja": "Atakujący", "numer": 9, "wiek": 21, "umiejetnosci": {"atak": 82, "obrona": 64, "zagrywka": 70, "blok": 78}, "forma": 88, "kontuzja": 0, "pensja": 11000},
         {"id": 10, "imie": "Bartosz", "nazwisko": "Jankowski", "pozycja": "Rozgrywający", "numer": 5, "wiek": 30, "umiejetnosci": {"atak": 62, "obrona": 82, "zagrywka": 80, "blok": 65}, "forma": 72, "kontuzja": 0, "pensja": 12000},
         {"id": 11, "imie": "Mateusz", "nazwisko": "Kozłowski", "pozycja": "Środkowy", "numer": 18, "wiek": 26, "umiejetnosci": {"atak": 72, "obrona": 60, "zagrywka": 63, "blok": 82}, "forma": 75, "kontuzja": 0, "pensja": 9500},
         {"id": 12, "imie": "Łukasz", "nazwisko": "Wojciechowski", "pozycja": "Libero", "numer": 6, "wiek": 27, "umiejetnosci": {"atak": 52, "obrona": 88, "zagrywka": 75, "blok": 58}, "forma": 76, "kontuzja": 0, "pensja": 10000},
-        {"id": 13, "imie": "Rafał", "nazwisko": "Kwiatkowski", "pozycja": "Przyjmujący", "numer": 4, "wiek": 24, "umiejetnosci": {"atak": 74, "obrona": 76, "zagrywka": 70, "blok": 68}, "forma": 79, "kontuzja": 0, "pensja": 11500},
-        {"id": 14, "imie": "Daniel", "nazwisko": "Kaczmarek", "pozycja": "Atakujący", "numer": 28, "wiek": 29, "umiejetnosci": {"atak": 80, "obrona": 66, "zagrywka": 73, "blok": 76}, "forma": 74, "kontuzja": 0, "pensja": 12500},
-        # Młodzież
-        {"id": 201, "imie": "Filip", "nazwisko": "Młody", "pozycja": "Przyjmujący", "numer": 31, "wiek": 18, "umiejetnosci": {"atak": 65, "obrona": 62, "zagrywka": 60, "blok": 58}, "forma": 85, "kontuzja": 0, "pensja": 3000, "potencjal": 88},
-        {"id": 202, "imie": "Kacper", "nazwisko": "Talent", "pozycja": "Środkowy", "numer": 32, "wiek": 17, "umiejetnosci": {"atak": 62, "obrona": 55, "zagrywka": 58, "blok": 68}, "forma": 82, "kontuzja": 0, "pensja": 2500, "potencjal": 85},
-        {"id": 203, "imie": "Szymon", "nazwisko": "Przyszłość", "pozycja": "Atakujący", "numer": 33, "wiek": 19, "umiejetnosci": {"atak": 70, "obrona": 58, "zagrywka": 62, "blok": 65}, "forma": 88, "kontuzja": 0, "pensja": 3500, "potencjal": 90},
-        {"id": 204, "imie": "Dominik", "nazwisko": "Obiecujący", "pozycja": "Rozgrywający", "numer": 34, "wiek": 18, "umiejetnosci": {"atak": 58, "obrona": 68, "zagrywka": 72, "blok": 60}, "forma": 80, "kontuzja": 0, "pensja": 3000, "potencjal": 86},
-        {"id": 205, "imie": "Oskar", "nazwisko": "Nadzieja", "pozycja": "Libero", "numer": 35, "wiek": 17, "umiejetnosci": {"atak": 48, "obrona": 78, "zagrywka": 65, "blok": 52}, "forma": 83, "kontuzja": 0, "pensja": 2500, "potencjal": 92},
     ]
     
     st.session_state.starting_lineup = {
         "I": 6, "II": 7, "III": 4, "IV": 1, "V": 2, "VI": 3, "Libero": 5
     }
     
+    # Na boisku podczas meczu (6 zawodników - bez środkowych i libero)
+    st.session_state.on_court = []
+    st.session_state.off_court_middle = []  # Środkowi poza
+    st.session_state.off_court_libero = None  # Libero poza
+    
     st.session_state.matches = []
     st.session_state.next_match = {"przeciwnik": "Jastrzębski Węgiel", "dzien": 7}
     st.session_state.match_in_progress = False
 
-# Funkcje
 def get_all_players():
     return st.session_state.first_team + st.session_state.reserve_players
 
@@ -92,11 +72,9 @@ def oblicz_ocena(player):
     return round(avg * (player["forma"] / 100), 1)
 
 def update_league_table(our_sets, opp_sets):
-    """Aktualizuje tabelę ligową po meczu"""
     our_team = st.session_state.club_name
     opponent = st.session_state.next_match["przeciwnik"]
     
-    # Nasz wynik
     st.session_state.league_table[our_team]["mecze"] += 1
     st.session_state.league_table[our_team]["sety_plus"] += our_sets
     st.session_state.league_table[our_team]["sety_minus"] += opp_sets
@@ -104,15 +82,14 @@ def update_league_table(our_sets, opp_sets):
     if our_sets > opp_sets:
         st.session_state.league_table[our_team]["wygrane"] += 1
         if our_sets == 3 and opp_sets <= 1:
-            st.session_state.league_table[our_team]["punkty"] += 3  # Wygrana 3:0 lub 3:1
+            st.session_state.league_table[our_team]["punkty"] += 3
         else:
-            st.session_state.league_table[our_team]["punkty"] += 2  # Wygrana 3:2
+            st.session_state.league_table[our_team]["punkty"] += 2
     else:
         st.session_state.league_table[our_team]["przegrane"] += 1
         if our_sets == 2:
-            st.session_state.league_table[our_team]["punkty"] += 1  # Porażka 2:3
+            st.session_state.league_table[our_team]["punkty"] += 1
     
-    # Przeciwnik (symulacja)
     st.session_state.league_table[opponent]["mecze"] += 1
     st.session_state.league_table[opponent]["sety_plus"] += opp_sets
     st.session_state.league_table[opponent]["sety_minus"] += our_sets
@@ -128,207 +105,98 @@ def update_league_table(our_sets, opp_sets):
         if opp_sets == 2:
             st.session_state.league_table[opponent]["punkty"] += 1
 
-def display_animated_court(set_team, set_opp, action_text, ball_position=None):
-    """Wyświetla animowane boisko z piłką"""
+def display_court_simple(set_team, set_opp, action_text, ball_emoji=""):
+    """Proste wyświetlanie boiska bez HTML"""
     
-    # Tablica wyników
-    st.markdown(f"""
-    <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
-                padding: 20px; border-radius: 15px; margin: 20px 0; color: white; text-align: center;'>
-        <div style='display: flex; justify-content: space-around; align-items: center;'>
-            <div style='font-size: 24px; font-weight: bold;'>🔵 {st.session_state.club_name}</div>
-            <div style='font-size: 64px; font-weight: bold;'>{set_team} : {set_opp}</div>
-            <div style='font-size: 24px; font-weight: bold;'>🟡 {st.session_state.next_match["przeciwnik"]}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Wynik
+    st.markdown(f"## 🔵 {st.session_state.club_name}  **{set_team} : {set_opp}**  🟡 {st.session_state.next_match['przeciwnik']}")
     
-    # Akcja
     if action_text:
-        st.markdown(f"""
-        <div style='background: rgba(0,0,0,0.9); color: #00ff00; padding: 20px; 
-                    border-radius: 10px; font-size: 24px; font-weight: bold; 
-                    text-align: center; margin: 20px 0; font-family: monospace;
-                    border: 2px solid #00ff00;'>
-            {action_text}
-        </div>
-        """, unsafe_allow_html=True)
+        st.success(f"### {ball_emoji} {action_text}")
     
-    # Boisko z piłką
+    st.markdown("---")
+    
+    # Boisko
     lineup = st.session_state.starting_lineup
     
-    st.markdown("""
-    <div style='background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); 
-                padding: 40px; border-radius: 20px; position: relative;'>
-    """, unsafe_allow_html=True)
+    st.write("**BOISKO:**")
+    st.write("")
     
-    # Pozycje boiska
-    positions_html = """
-    <div style='background: #d2691e; border: 6px solid #000; border-radius: 15px; 
-                padding: 60px; position: relative; min-height: 600px;'>
-    """
-    
-    # Piłka (jeśli jest)
-    if ball_position:
-        positions_html += f"""
-        <div style='position: absolute; left: {ball_position['left']}; top: {ball_position['top']}; 
-                    width: 50px; height: 50px; background: radial-gradient(circle at 30% 30%, #fff, #ff3333);
-                    border-radius: 50%; z-index: 1000; 
-                    box-shadow: 0 8px 16px rgba(0,0,0,0.5);
-                    animation: bounce 0.5s ease-in-out;'>
-        </div>
-        <style>
-        @keyframes bounce {{
-            0%, 100% {{ transform: translateY(0); }}
-            50% {{ transform: translateY(-10px); }}
-        }}
-        </style>
-        """
-    
-    # Siatka
-    positions_html += """
-    <div style='position: absolute; left: 50%; top: 0; bottom: 0; 
-                width: 6px; background: repeating-linear-gradient(0deg, #333 0px, #333 10px, transparent 10px, transparent 20px);
-                transform: translateX(-50%); z-index: 500;'></div>
-    """
-    
-    # Zawodnicy - linia ataku
-    attack_positions = {
-        "IV": {"left": "15%", "top": "15%"},
-        "III": {"left": "45%", "top": "10%"},
-        "II": {"left": "75%", "top": "15%"}
-    }
-    
-    for pos, coords in attack_positions.items():
+    # Linia ataku
+    col1, col2, col3 = st.columns(3)
+    for i, (col, pos) in enumerate(zip([col1, col2, col3], ["IV", "III", "II"])):
         pid = lineup.get(pos)
         if pid:
             p = get_player_by_id(pid)
-            positions_html += f"""
-            <div style='position: absolute; left: {coords["left"]}; top: {coords["top"]}; 
-                        transform: translate(-50%, -50%);'>
-                <div style='background: linear-gradient(135deg, #2196F3, #1565C0); 
-                            width: 90px; height: 90px; border-radius: 50%; 
-                            display: flex; flex-direction: column; justify-content: center; 
-                            align-items: center; color: white; font-weight: bold;
-                            box-shadow: 0 6px 12px rgba(33, 150, 243, 0.5);
-                            border: 4px solid #fff;'>
-                    <div style='font-size: 32px;'>#{p.get('numer', '?')}</div>
-                    <div style='font-size: 11px;'>{p['nazwisko'][:8]}</div>
-                </div>
-            </div>
-            """
+            with col:
+                st.info(f"**Poz {pos}**\n#{p.get('numer', '?')} {p['nazwisko']}\n{p['pozycja']}")
     
-    # Zawodnicy - linia obrony
-    defense_positions = {
-        "V": {"left": "15%", "top": "75%"},
-        "VI": {"left": "45%", "top": "80%"},
-        "I": {"left": "75%", "top": "75%"}
-    }
+    st.markdown("### ═══════ SIATKA ═══════")
     
-    for pos, coords in defense_positions.items():
+    # Linia obrony
+    col1, col2, col3 = st.columns(3)
+    for i, (col, pos) in enumerate(zip([col1, col2, col3], ["V", "VI", "I"])):
         pid = lineup.get(pos)
         if pid:
             p = get_player_by_id(pid)
-            extra = "⚡" if pos == "I" else "↔️" if pos == "V" else ""
-            positions_html += f"""
-            <div style='position: absolute; left: {coords["left"]}; top: {coords["top"]}; 
-                        transform: translate(-50%, -50%);'>
-                <div style='background: linear-gradient(135deg, #2196F3, #1565C0); 
-                            width: 90px; height: 90px; border-radius: 50%; 
-                            display: flex; flex-direction: column; justify-content: center; 
-                            align-items: center; color: white; font-weight: bold;
-                            box-shadow: 0 6px 12px rgba(33, 150, 243, 0.5);
-                            border: 4px solid #fff;'>
-                    <div style='font-size: 32px;'>#{p.get('numer', '?')}</div>
-                    <div style='font-size: 11px;'>{p['nazwisko'][:8]} {extra}</div>
-                </div>
-            </div>
-            """
+            with col:
+                extra = "⚡" if pos == "I" else ""
+                st.info(f"**Poz {pos} {extra}**\n#{p.get('numer', '?')} {p['nazwisko']}\n{p['pozycja']}")
     
-    positions_html += "</div></div>"
+    st.write("")
     
-    st.markdown(positions_html, unsafe_allow_html=True)
+    # Poza boiskiem
+    col1, col2 = st.columns(2)
     
-    # Libero info
-    lib_id = lineup.get("Libero")
-    if lib_id:
-        lib = get_player_by_id(lib_id)
-        st.info(f"🟡 LIBERO (poza boiskiem): #{lib.get('numer', '?')} {lib['imie']} {lib['nazwisko']}")
+    with col1:
+        # Środkowi poza
+        srodkowi_poza = []
+        for pos in ["II", "V"]:
+            pid = lineup.get(pos)
+            if pid:
+                p = get_player_by_id(pid)
+                if p["pozycja"] == "Środkowy":
+                    srodkowi_poza.append(p)
+        
+        if srodkowi_poza:
+            st.warning(f"**ŚRODKOWI (poza):** " + ", ".join([f"#{p['numer']} {p['nazwisko']}" for p in srodkowi_poza]))
+    
+    with col2:
+        # Libero poza
+        lib_id = lineup.get("Libero")
+        if lib_id:
+            lib = get_player_by_id(lib_id)
+            st.warning(f"**LIBERO (poza):** #{lib.get('numer', '?')} {lib['nazwisko']}")
 
-def symuluj_akcje_z_animacja(team_str, opp_str, lineup_players):
-    """Symuluje akcję z pełną animacją piłki"""
+def symuluj_akcje(team_str, opp_str, lineup_players):
+    """Symuluje akcję z opisem"""
     diff = team_str - opp_str
     prob = 0.5 + (diff / 200)
     prob = max(0.3, min(0.7, prob))
     
     team_wins = random.random() < prob
     
-    # Etapy akcji z pozycjami piłki
     phases = []
     
-    # 1. Zagrywka
+    # Zagrywka
     server = random.choice([p for p in lineup_players if p["pozycja"] != "Libero"])
-    phases.append({
-        "text": f"⚡ ZAGRYWKA: #{server.get('numer', '?')} {server['nazwisko']}",
-        "ball": {"left": "75%", "top": "75%"}
-    })
+    phases.append(("⚡", f"ZAGRYWKA: #{server.get('numer', '?')} {server['nazwisko']}"))
     
     if team_wins:
-        # 2. Piłka leci przez siatkę
-        phases.append({
-            "text": f"🏐 Piłka leci...",
-            "ball": {"left": "50%", "top": "45%"}
-        })
-        
-        # 3. Przyjęcie
+        # Przyjęcie
         receiver = random.choice([p for p in lineup_players if p["pozycja"] in ["Libero", "Przyjmujący"]])
-        phases.append({
-            "text": f"🛡️ PRZYJĘCIE: #{receiver.get('numer', '?')} {receiver['nazwisko']}",
-            "ball": {"left": "30%", "top": "60%"}
-        })
+        phases.append(("🛡️", f"PRZYJĘCIE: #{receiver.get('numer', '?')} {receiver['nazwisko']}"))
         
-        # 4. Rozegranie
+        # Rozegranie
         setter = next((p for p in lineup_players if p["pozycja"] == "Rozgrywający"), None)
         if setter:
-            phases.append({
-                "text": f"🎯 ROZEGRANIE: #{setter.get('numer', '?')} {setter['nazwisko']}",
-                "ball": {"left": "45%", "top": "35%"}
-            })
+            phases.append(("🎯", f"ROZEGRANIE: #{setter.get('numer', '?')} {setter['nazwisko']}"))
         
-        # 5. Wystawienie do ataku
-        phases.append({
-            "text": "⬆️ Wystawienie...",
-            "ball": {"left": "35%", "top": "20%"}
-        })
-        
-        # 6. Atak
+        # Atak
         attacker = random.choice([p for p in lineup_players if p["pozycja"] in ["Atakujący", "Przyjmujący", "Środkowy"]])
-        phases.append({
-            "text": f"💥 ATAK! #{attacker.get('numer', '?')} {attacker['nazwisko']}",
-            "ball": {"left": "30%", "top": "10%"}
-        })
-        
-        # 7. Piłka leci nad siatką
-        phases.append({
-            "text": "🔥 Piłka leci nad siatką!",
-            "ball": {"left": "50%", "top": "5%"}
-        })
-        
-        # 8. Punkt!
-        phases.append({
-            "text": f"✅ PUNKT! {attacker['nazwisko'].upper()}!",
-            "ball": {"left": "70%", "top": "30%"}
-        })
+        phases.append(("💥", f"ATAK! #{attacker.get('numer', '?')} {attacker['nazwisko']} - PUNKT!"))
     else:
-        # Błąd przeciwnika
-        phases.append({
-            "text": "❌ Błąd przeciwnika",
-            "ball": {"left": "65%", "top": "40%"}
-        })
-        phases.append({
-            "text": "✅ PUNKT dla nas!",
-            "ball": None
-        })
+        phases.append(("❌", "Błąd przeciwnika - PUNKT dla nas!"))
     
     return team_wins, phases
 
@@ -364,12 +232,12 @@ def validate_lineup():
     lineup = st.session_state.starting_lineup
     for pos in ["I", "II", "III", "IV", "V", "VI", "Libero"]:
         if not lineup.get(pos):
-            return False, f"Brak zawodnika na poz. {pos}"
+            return False, f"Brak na poz. {pos}"
         p = get_player_by_id(lineup[pos])
         if not p:
-            return False, "Błąd składu"
+            return False, "Błąd"
         if p["kontuzja"] > 0:
-            return False, f"{p['nazwisko']} kontuzjowany"
+            return False, f"{p['nazwisko']} kontuzja"
     return True, "OK"
 
 # UI
@@ -388,18 +256,17 @@ with col4:
 with col5:
     st.metric("Morale", f"{st.session_state.morale}%")
 
-# Zakładki
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "🏠 Główna",
-    "📊 Tabela Ligi",
+    "📊 Tabela",
     "👥 Kadra",
-    "⚙️ Ustawienie",
-    "📈 Statystyki",
-    "🏐 Mecz LIVE"
+    "⚙️ Skład",
+    "📈 Stats",
+    "🏐 Mecz"
 ])
 
 with tab1:
-    st.header("Panel główny")
+    st.header("Panel")
     
     col1, col2 = st.columns([2, 1])
     
@@ -407,11 +274,10 @@ with tab1:
         if st.session_state.matches:
             last = st.session_state.matches[-1]
             if last["wygrana"]:
-                st.success(f"✅ Ostatni: Wygrana z {last['przeciwnik']} {last['wynik']}")
+                st.success(f"✅ Wygrana {last['wynik']} z {last['przeciwnik']}")
             else:
-                st.error(f"❌ Ostatni: Porażka z {last['przeciwnik']} {last['wynik']}")
+                st.error(f"❌ Porażka {last['wynik']} z {last['przeciwnik']}")
         
-        st.markdown("---")
         days = st.session_state.next_match["dzien"] - st.session_state.current_day
         if days > 0:
             st.info(f"🏐 Mecz za {days} dni: {st.session_state.next_match['przeciwnik']}")
@@ -419,150 +285,129 @@ with tab1:
             st.warning("🏐 MECZ DZISIAJ!")
     
     with col2:
-        if st.button("🏃 Trening wszystkich", use_container_width=True):
-            trenuj_druzyne(all_players=True)
+        if st.button("🏃 Trening", use_container_width=True):
+            trenuj_druzyne(True)
             next_day()
-            st.success("✅ Trening!")
+            st.success("✅")
             st.rerun()
         
-        if st.button("⏭️ Następny dzień", use_container_width=True):
+        if st.button("⏭️ Dzień", use_container_width=True):
             next_day()
             st.rerun()
 
 with tab2:
-    st.header("📊 Tabela Ligi Plus")
+    st.header("📊 Liga")
     
-    # Przygotuj dane tabeli
     table_data = []
     for team, stats in st.session_state.league_table.items():
         table_data.append({
             "Drużyna": "🏆 " + team if team == st.session_state.club_name else team,
-            "Mecze": stats["mecze"],
-            "Wygrane": stats["wygrane"],
-            "Przegrane": stats["przegrane"],
+            "M": stats["mecze"],
+            "W": stats["wygrane"],
+            "P": stats["przegrane"],
             "Sety": f"{stats['sety_plus']}:{stats['sety_minus']}",
-            "Bilans": stats['sety_plus'] - stats['sety_minus'],
-            "Punkty": stats["punkty"]
+            "Bil": stats['sety_plus'] - stats['sety_minus'],
+            "Pkt": stats["punkty"]
         })
     
-    # Sortuj po punktach
-    table_data.sort(key=lambda x: (x["Punkty"], x["Bilans"]), reverse=True)
+    table_data.sort(key=lambda x: (x["Pkt"], x["Bil"]), reverse=True)
     
-    # Dodaj pozycję
     for i, row in enumerate(table_data, 1):
-        row["Poz."] = i
+        row["#"] = i
     
-    # Zmień kolejność kolumn
     df = pd.DataFrame(table_data)
-    df = df[["Poz.", "Drużyna", "Mecze", "Wygrane", "Przegrane", "Sety", "Bilans", "Punkty"]]
+    df = df[["#", "Drużyna", "M", "W", "P", "Sety", "Bil", "Pkt"]]
     
     st.dataframe(df, use_container_width=True, hide_index=True)
-    
-    # Nasza pozycja
-    our_pos = next(i for i, row in enumerate(table_data, 1) if row["Drużyna"].endswith(st.session_state.club_name))
-    
-    if our_pos == 1:
-        st.success(f"🥇 Jesteśmy LIDEREM ligi!")
-    elif our_pos <= 3:
-        st.info(f"🥉 {our_pos}. miejsce - walczymy o podium!")
-    elif our_pos <= 6:
-        st.warning(f"📊 {our_pos}. miejsce - środek tabeli")
-    else:
-        st.error(f"⚠️ {our_pos}. miejsce - strefa spadkowa!")
 
 with tab3:
-    st.header("👥 Zarządzanie kadrą")
+    st.header("👥 Kadra")
     
-    st.info("💡 **UPROSZCZONE ZARZĄDZANIE**: Pierwsza drużyna (7) + Poza składem (wszyscy reszta)")
-    
-    col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("🏆 Pierwsza drużyna (7)")
+        st.subheader("🏆 Pierwsza (7)")
         
         for p in st.session_state.first_team:
-            cols = st.columns([5, 1])
-            with cols[0]:
-                status = "🤕" if p["kontuzja"] > 0 else "✅"
-                pot = f" ⭐Pot:{p['potencjal']}" if p.get("potencjal") else ""
-                st.write(f"{status} **#{p.get('numer', '?')} {p['imie']} {p['nazwisko']}**{pot}")
-                st.caption(f"{p['pozycja']} • Ocena: {oblicz_ocena(p)} • Forma: {p['forma']}%")
-            with cols[1]:
-                if st.button("➡️", key=f"out_{p['id']}", help="Poza skład"):
+            c = st.columns([5, 1])
+            with c[0]:
+                s = "🤕" if p["kontuzja"] > 0 else "✅"
+                pot = f"⭐{p['potencjal']}" if p.get("potencjal") else ""
+                st.write(f"{s} #{p['numer']} **{p['nazwisko']}** {pot}")
+                st.caption(f"{p['pozycja']} • {oblicz_ocena(p)}")
+            with c[1]:
+                if st.button("→", key=f"o{p['id']}"):
                     st.session_state.first_team.remove(p)
                     st.session_state.reserve_players.append(p)
-                    # Usuń z ustawienia
                     for pos, pid in st.session_state.starting_lineup.items():
                         if pid == p["id"]:
                             st.session_state.starting_lineup[pos] = None
                     st.rerun()
-            st.markdown("---")
+            st.divider()
     
     with col2:
-        st.subheader("🪑 Poza składem")
+        st.subheader("🪑 Poza")
         
         for p in st.session_state.reserve_players:
-            cols = st.columns([4, 1, 1])
-            with cols[0]:
-                status = "🤕" if p["kontuzja"] > 0 else "✅"
-                pot = f" ⭐{p['potencjal']}" if p.get("potencjal") else ""
-                st.write(f"{status} **#{p.get('numer', '?')} {p['nazwisko']}**{pot}")
-                st.caption(f"{p['pozycja']} • {oblicz_ocena(p)}")
-            with cols[1]:
+            c = st.columns([4, 1, 1])
+            with c[0]:
+                s = "🤕" if p["kontuzja"] > 0 else "✅"
+                pot = f"⭐{p['potencjal']}" if p.get("potencjal") else ""
+                st.write(f"{s} #{p['numer']} {p['nazwisko']} {pot}")
+                st.caption(f"{p['pozycja']}")
+            with c[1]:
                 if len(st.session_state.first_team) < 7:
-                    if st.button("⬅️", key=f"in_{p['id']}", help="Do pierwszej"):
+                    if st.button("←", key=f"i{p['id']}"):
                         st.session_state.reserve_players.remove(p)
                         st.session_state.first_team.append(p)
                         if "potencjal" in p:
                             del p["potencjal"]
                         st.rerun()
-            with cols[2]:
-                if st.button("🗑️", key=f"del_{p['id']}", help="Zwolnij"):
-                    price = int(oblicz_ocena(p) * 1000)
-                    st.session_state.budget += price
+            with c[2]:
+                if st.button("🗑", key=f"d{p['id']}"):
+                    pr = int(oblicz_ocena(p) * 1000)
+                    st.session_state.budget += pr
                     st.session_state.reserve_players.remove(p)
-                    st.toast(f"Sprzedano za {price:,} zł!")
                     st.rerun()
-            st.markdown("---")
+            st.divider()
 
 with tab4:
-    st.header("⚙️ Ustawienie na mecz")
+    st.header("⚙️ Skład")
     
     lineup = st.session_state.starting_lineup
     available = [p for p in st.session_state.first_team if p["kontuzja"] == 0]
     
-    # Wizualizacja
-    st.subheader("📋 Aktualne")
+    st.subheader("Wizualizacja")
     
-    cols = st.columns(3)
+    c = st.columns(3)
     for i, pos in enumerate(["IV", "III", "II"]):
         pid = lineup.get(pos)
         if pid:
             p = get_player_by_id(pid)
-            with cols[i]:
-                st.success(f"**{pos}**\n#{p.get('numer', '?')} {p['nazwisko']}\n{p['pozycja']}")
+            with c[i]:
+                st.info(f"**{pos}**\n#{p['numer']} {p['nazwisko']}")
     
-    st.markdown("<div style='text-align:center; font-size:18px; margin:15px 0;'>═══ SIATKA ═══</div>", unsafe_allow_html=True)
+    st.write("### ═══ SIATKA ═══")
     
-    cols = st.columns(3)
+    c = st.columns(3)
     for i, pos in enumerate(["V", "VI", "I"]):
         pid = lineup.get(pos)
         if pid:
             p = get_player_by_id(pid)
-            extra = "⚡" if pos == "I" else "↔️" if pos == "V" else ""
-            with cols[i]:
-                st.success(f"**{pos} {extra}**\n#{p.get('numer', '?')} {p['nazwisko']}\n{p['pozycja']}")
+            with c[i]:
+                ex = "⚡" if pos == "I" else ""
+                st.info(f"**{pos} {ex}**\n#{p['numer']} {p['nazwisko']}")
     
     lid = lineup.get("Libero")
     if lid:
         lib = get_player_by_id(lid)
-        st.warning(f"**LIBERO:** #{lib.get('numer', '?')} {lib['nazwisko']}")
+        st.warning(f"LIBERO: #{lib['numer']} {lib['nazwisko']}")
     
-    st.markdown("---")
-    st.subheader("🔧 Zmień skład")
+    st.divider()
+    st.subheader("Edycja")
     
     for pos in ["I", "II", "III", "IV", "V", "VI", "Libero"]:
-        opts = [f"#{p.get('numer', '?')} {p['nazwisko']} ({p['pozycja']}) - {oblicz_ocena(p)}" for p in available]
+        opts = [f"#{p['numer']} {p['nazwisko']} ({p['pozycja']})" for p in available]
         opts.insert(0, "---")
         
         curr = lineup.get(pos)
@@ -571,15 +416,15 @@ with tab4:
             pl = get_player_by_id(curr)
             if pl:
                 for i, o in enumerate(opts):
-                    if f"#{pl.get('numer', '?')}" in o:
+                    if f"#{pl['numer']}" in o:
                         idx = i
                         break
         
-        sel = st.selectbox(f"Pozycja {pos}", opts, index=idx, key=f"s_{pos}")
+        sel = st.selectbox(f"Poz {pos}", opts, index=idx, key=f"s{pos}")
         
         if sel != "---":
             num = sel.split("#")[1].split(" ")[0]
-            pl = next((p for p in available if str(p.get('numer', '?')) == num), None)
+            pl = next((p for p in available if str(p['numer']) == num), None)
             if pl:
                 st.session_state.starting_lineup[pos] = pl["id"]
         else:
@@ -587,28 +432,17 @@ with tab4:
     
     v, m = validate_lineup()
     if v:
-        st.success("✅ Gotowe!")
+        st.success("✅ OK")
     else:
         st.error(f"❌ {m}")
 
 with tab5:
     st.header("📈 Statystyki")
     
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Bilans sezonu")
-        if st.session_state.matches:
-            w = sum(1 for m in st.session_state.matches if m["wygrana"])
-            st.metric("Wygrane", w)
-            st.metric("Przegrane", len(st.session_state.matches) - w)
-    
-    with col2:
-        st.subheader("Top 3 klubu")
-        all_p = get_all_players()
-        top = sorted(all_p, key=oblicz_ocena, reverse=True)[:3]
-        for i, p in enumerate(top, 1):
-            st.write(f"{i}. #{p.get('numer', '?')} {p['nazwisko']} - {oblicz_ocena(p)}")
+    if st.session_state.matches:
+        w = sum(1 for m in st.session_state.matches if m["wygrana"])
+        st.metric("Wygrane", w)
+        st.metric("Przegrane", len(st.session_state.matches) - w)
 
 with tab6:
     st.header("🏐 Mecz LIVE")
@@ -623,20 +457,14 @@ with tab6:
         if not v:
             st.error(m)
         else:
-            st.success(f"Mecz: {st.session_state.next_match['przeciwnik']}")
+            st.success(f"Przeciwnik: {st.session_state.next_match['przeciwnik']}")
             
+            # Przyciski
             col1, col2 = st.columns(2)
             
             with col1:
-                if st.button("⚡ Szybka", use_container_width=True, type="primary"):
+                if st.button("⚡ SZYBKA", use_container_width=True, type="primary"):
                     opp = st.session_state.next_match['przeciwnik']
-                    
-                    lineup_p = []
-                    for pos in ["I", "II", "III", "IV", "V", "VI", "Libero"]:
-                        pid = st.session_state.starting_lineup[pos]
-                        p = get_player_by_id(pid)
-                        if p and pos != "Libero":
-                            lineup_p.append(p)
                     
                     sets_us = 0
                     sets_opp = 0
@@ -650,16 +478,15 @@ with tab6:
                             sets_opp += 1
                             sets_det.append(f"{random.randint(20, 23)}:25")
                     
-                    # Aktualizuj tabelę
                     update_league_table(sets_us, sets_opp)
                     
                     if sets_us > sets_opp:
                         st.balloons()
-                        st.success(f"🎉 WYGRANA {sets_us}:{sets_opp}!")
+                        st.success(f"🎉 {sets_us}:{sets_opp}!")
                         st.session_state.budget += 25000
                         st.session_state.morale = min(100, st.session_state.morale + 5)
                     else:
-                        st.error(f"😞 Porażka {sets_us}:{sets_opp}")
+                        st.error(f"😞 {sets_us}:{sets_opp}")
                         st.session_state.budget += 10000
                         st.session_state.morale = max(50, st.session_state.morale - 3)
                     
@@ -670,18 +497,18 @@ with tab6:
                         "wygrana": sets_us > sets_opp
                     })
                     
-                    # Następny przeciwnik
                     next_opp = random.choice([t for t in st.session_state.league_teams if t != st.session_state.club_name and t != opp])
                     st.session_state.next_match = {"przeciwnik": next_opp, "dzien": st.session_state.current_day + 7}
                     
-                    if st.button("✅ OK"):
-                        st.rerun()
+                    time.sleep(1)
+                    st.rerun()
             
             with col2:
-                if st.button("🎬 ANIMACJA!", use_container_width=True, type="secondary"):
+                if st.button("🎬 ANIMACJA", use_container_width=True, type="secondary"):
                     st.session_state.match_in_progress = True
                     st.rerun()
             
+            # Mecz z animacją
             if st.session_state.match_in_progress:
                 opp = st.session_state.next_match['przeciwnik']
                 
@@ -706,21 +533,39 @@ with tab6:
                 sets_det = []
                 set_n = 1
                 
+                # Panel zmian
+                st.sidebar.header("🔄 ZMIANY")
+                bench_available = [p for p in st.session_state.first_team if p not in lineup_p and p["kontuzja"] == 0]
+                
+                if bench_available:
+                    st.sidebar.write("**Ławka:**")
+                    for bp in bench_available:
+                        if st.sidebar.button(f"Wpuść #{bp['numer']} {bp['nazwisko']}", key=f"sub_{bp['id']}"):
+                            # Wybierz kogo zmienić
+                            st.sidebar.write("Kogo zmienić?")
+                            for lp in lineup_p:
+                                if lp["pozycja"] == bp["pozycja"]:
+                                    if st.sidebar.button(f"Zmień #{lp['numer']}", key=f"out_{lp['id']}"):
+                                        lineup_p.remove(lp)
+                                        lineup_p.append(bp)
+                                        st.sidebar.success(f"✅ Zmiana: #{bp['numer']} za #{lp['numer']}")
+                                        time.sleep(0.5)
+                
                 while sets_us < 3 and sets_opp < 3:
                     max_p = 15 if set_n == 5 else 25
                     
-                    st.write(f"### Set {set_n}")
+                    st.write(f"## Set {set_n}")
                     
                     s_us = 0
                     s_opp = 0
                     
                     while True:
-                        team_wins, phases = symuluj_akcje_z_animacja(team_str, opp_str, lineup_p)
+                        team_wins, phases = symuluj_akcje(team_str, opp_str, lineup_p)
                         
-                        for phase in phases:
+                        for emoji, text in phases:
                             with court_place.container():
-                                display_animated_court(s_us, s_opp, phase["text"], phase.get("ball"))
-                            time.sleep(0.8)
+                                display_court_simple(s_us, s_opp, text, emoji)
+                            time.sleep(1)
                         
                         if team_wins:
                             s_us += 1
@@ -739,9 +584,8 @@ with tab6:
                             break
                     
                     set_n += 1
-                    time.sleep(1.5)
+                    time.sleep(1)
                 
-                # Aktualizuj tabelę
                 update_league_table(sets_us, sets_opp)
                 
                 if sets_us > sets_opp:
@@ -765,9 +609,10 @@ with tab6:
                 st.session_state.next_match = {"przeciwnik": next_opp, "dzien": st.session_state.current_day + 7}
                 st.session_state.match_in_progress = False
                 
-                if st.button("✅ Zakończ"):
+                if st.button("✅ Zakończ mecz"):
                     st.rerun()
 
 st.markdown("---")
-st.markdown("*Volleyball Manager 2024 - Final Edition* 🏐")
+st.markdown("*Volleyball Manager 2024*")
+
 
